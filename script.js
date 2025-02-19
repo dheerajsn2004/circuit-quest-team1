@@ -115,7 +115,7 @@ function checkAnswer(index) {
 // Show Completion Message and Scroll Down
 // Show Completion Message and Scroll Down
 function showCompletionMessage() {
-    let roomNumbers = questions.map(q => `<p>${q.q} - <b>${q.a} → ${q.room}</b></p>`).join("");
+    let roomNumbers = questions.map(q => `<p><b>${q.room}</b> → ${q.a}</p>`).join(""); // Only showing answer beside room number
     roomLocationStored = `<h3>🎉 Congratulations! You have successfully completed the quiz. 🎉</h3>${roomNumbers}`;
     localStorage.setItem("roomLocation", roomLocationStored);
 
@@ -131,6 +131,7 @@ function showCompletionMessage() {
         document.getElementById("roomLocation").scrollIntoView({ behavior: "smooth", block: "start" });
     }, 1000); // Adding a delay for smooth experience
 }
+
 
 
 // Restore State on Refresh
