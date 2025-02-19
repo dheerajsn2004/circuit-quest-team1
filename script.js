@@ -1,112 +1,136 @@
-const questions = {
-    1: [
-        { q: "The unit of resistance is ___.", a: "ohm", clue: "Resistor" },
-        { q: "An LED emits ___ when current flows through it.", a: "light", clue: "LED" },
-        { q: "A capacitor stores ___ energy.", a: "electrical", clue: "Capacitor" }
-    ],
-    2: [
-        { q: "A diode allows current in ___ direction.", a: "one", clue: "Diode" },
-        { q: "The SI unit of capacitance is ___.", a: "farad", clue: "Capacitor" },
-        { q: "The device used to measure current is called ___.", a: "ammeter", clue: "Ammeter" }
-    ],
-    3: [
-        { q: "The transistor is used for ___.", a: "amplification", clue: "Transistor" },
-        { q: "The voltage regulator IC is ___.", a: "7805", clue: "Voltage Regulator" },
-        { q: "A fuse is used for ___.", a: "protection", clue: "Fuse" }
-    ],
-    4: [
-        { q: "A Zener diode is used for ___.", a: "voltage regulation", clue: "Zener Diode" },
-        { q: "A photodiode detects ___.", a: "light", clue: "Photodiode" },
-        { q: "A potentiometer is used to vary ___.", a: "resistance", clue: "Potentiometer" }
-    ],
-    5: [
-        { q: "The basic unit of inductance is ___.", a: "henry", clue: "Inductor" },
-        { q: "A rectifier converts AC to ___.", a: "dc", clue: "Rectifier" },
-        { q: "A relay is used for ___.", a: "switching", clue: "Relay" }
-    ],
-    6: [
-        { q: "An oscilloscope is used to measure ___.", a: "waveform", clue: "Oscilloscope" },
-        { q: "A thermistor is used to measure ___.", a: "temperature", clue: "Thermistor" },
-        { q: "The SI unit of frequency is ___.", a: "hertz", clue: "Oscillator" }
-    ],
-    7: [
-        { q: "A microphone converts sound into ___.", a: "electric signal", clue: "Microphone" },
-        { q: "The device that stores charge is called a ___.", a: "capacitor", clue: "Capacitor" },
-        { q: "A transformer is used to change ___.", a: "voltage", clue: "Transformer" }
-    ],
-    8: [
-        { q: "An LDR changes resistance with ___.", a: "light", clue: "LDR" },
-        { q: "The device used to amplify signals is ___.", a: "transistor", clue: "Transistor" },
-        { q: "A motor converts electrical energy to ___.", a: "mechanical energy", clue: "Motor" }
-    ],
-    9: [
-        { q: "An operational amplifier is used for ___.", a: "signal processing", clue: "Op-Amp" },
-        { q: "A piezoelectric sensor detects ___.", a: "pressure", clue: "Piezoelectric Sensor" },
-        { q: "A solar panel converts ___.", a: "light into electricity", clue: "Solar Panel" }
-    ],
-    10: [
-        { q: "A push-button is a type of ___.", a: "switch", clue: "Push-Button" },
-        { q: "A buzzer produces ___.", a: "sound", clue: "Buzzer" },
-        { q: "An antenna is used for ___.", a: "signal transmission", clue: "Antenna" }
-    ]
-};
+const questions = [
+    { q: "The unit of resistance is ___.", a: "ohm", room: "Room A101" },
+    { q: "An LED emits ___ when current flows through it.", a: "light", room: "Room B202" },
+    { q: "A capacitor stores ___ energy.", a: "electrical", room: "Room C303" }
+];
 
-let currentTeam = 1;
-let currentQuestions = [];
-let attemptCounts = {}; // Stores number of attempts for each question
+let attemptCounts = JSON.parse(localStorage.getItem("attemptCounts")) || Array(questions.length).fill(0);
+let correctAnswersCount = JSON.parse(localStorage.getItem("correctAnswersCount")) || 0;
+let answeredQuestions = JSON.parse(localStorage.getItem("answeredQuestions")) || Array(questions.length).fill(false);
+let userAnswers = JSON.parse(localStorage.getItem("userAnswers")) || Array(questions.length).fill("");
+let quizCompleted = JSON.parse(localStorage.getItem("quizCompleted")) || false;
+let roomLocationStored = localStorage.getItem("roomLocation") || ""; 
 
-function startQuiz() {
-    const teamNumber = parseInt(document.getElementById("teamNumber").value);
-    if (teamNumber < 1 || teamNumber > 10 || isNaN(teamNumber)) {
-        alert("Please enter a valid team number between 1 and 10.");
+let timeLeft = JSON.parse(localStorage.getItem("timeLeft")) || 180; // 3 minutes
+const timerElement = document.getElementById("timer");
+const roomLocation = document.getElementById("roomLocation");
+
+// Timer Logic
+function startTimer() {
+    if (quizCompleted) {
+        timerElement.style.display = "none"; // Hide timer if quiz is already completed
         return;
     }
 
-    currentTeam = teamNumber;
-    currentQuestions = questions[teamNumber]; // Each team gets its own set
+    const timerInterval = setInterval(() => {
+        if (correctAnswersCount === questions.length || timeLeft <= 0) {
+            clearInterval(timerInterval);
+            if (correctAnswersCount === questions.length) {
+                timerElement.style.display = "none"; // Hide timer
+            } else {
+                alert("Time's up! The quiz will reset.");
+                localStorage.clear();
+                location.reload();
+            }
+        } else {
+            timeLeft--;
+            localStorage.setItem("timeLeft", timeLeft);
+            let minutes = Math.floor(timeLeft / 60);
+            let seconds = timeLeft % 60;
 
-    // Initialize attempt counts
-    attemptCounts = {};
-    currentQuestions.forEach((_, index) => {
-        attemptCounts[index] = 0;
-    });
-
-    document.getElementById("loginPage").style.display = "none";
-    document.getElementById("quizPage").style.display = "block";
-    document.getElementById("teamInfo").innerText = `Team ${currentTeam}, answer the questions below:`;
-
-    const questionContainer = document.getElementById("questionContainer");
-    questionContainer.innerHTML = "";
-
-    currentQuestions.forEach((q, index) => {
-        questionContainer.innerHTML += `
-            <div class="question">
-                <p>${q.q}</p>
-                <input type="text" id="answer${index}" placeholder="Your Answer">
-                <button onclick="checkAnswer(${index})">Submit</button>
-                <p id="clue${index}" class="clue-message"></p>
-            </div>
-        `;
-    });
+            // Change timer background color only when active
+            timerElement.innerText = `Time Left: ${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
+            timerElement.style.backgroundColor = timeLeft > 0 ? "transparent" : "red";
+        }
+    }, 1000);
 }
 
+startTimer();
+
+// Display Questions
+const questionContainer = document.getElementById("questionContainer");
+questions.forEach((q, index) => {
+    questionContainer.innerHTML += `
+        <div class="question">
+            <p>${q.q}</p>
+            <input type="text" id="answer${index}" value="${userAnswers[index]}" placeholder="Your Answer" ${answeredQuestions[index] ? 'disabled' : ''}>
+            <button onclick="checkAnswer(${index})" ${answeredQuestions[index] ? 'disabled' : ''}>Submit</button>
+            <p id="feedback${index}" class="feedback" style="color: ${answeredQuestions[index] ? 'green' : 'white'};">
+                ${answeredQuestions[index] ? "Correct!" : ""}
+            </p>
+            <p id="attempts${index}" class="attempt-message">Attempts: ${attemptCounts[index]}</p>
+        </div>
+    `;
+});
+
+// Check Answer Function
 function checkAnswer(index) {
-    attemptCounts[index]++; // Track attempts
+    let answerInput = document.getElementById(`answer${index}`);
+    let feedbackMessage = document.getElementById(`feedback${index}`);
+    let attemptMessage = document.getElementById(`attempts${index}`);
+    let button = document.querySelector(`.question:nth-child(${index + 1}) button`);
 
-    const answer = document.getElementById(`answer${index}`).value.trim().toLowerCase();
-    const correctAnswer = currentQuestions[index].a.toLowerCase();
-    const clueMessage = document.getElementById(`clue${index}`);
+    let userAnswer = answerInput.value.trim().toLowerCase();
+    let correctAnswer = questions[index].a.toLowerCase();
 
-    if (answer === correctAnswer) {
-        clueMessage.innerText = `Clue: ${currentQuestions[index].clue}`;
-        clueMessage.style.color = "green";
-    } else {
-        clueMessage.innerText = "Incorrect! Try again.";
-        clueMessage.style.color = "red";
-    }
+    if (!userAnswer) return; 
+
+    // Disable button and show "Checking..."
+    button.disabled = true;
+    button.innerText = "Checking...";
+    
+    setTimeout(() => {
+        attemptCounts[index]++;
+        localStorage.setItem("attemptCounts", JSON.stringify(attemptCounts));
+
+        if (userAnswer === correctAnswer) {
+            feedbackMessage.innerText = "Correct!";
+            feedbackMessage.style.color = "green"; // Keep text green
+            answeredQuestions[index] = true;
+            userAnswers[index] = userAnswer;
+            answerInput.disabled = true;
+            button.disabled = true;
+            button.innerText = "Submitted";
+
+            correctAnswersCount++;
+            localStorage.setItem("correctAnswersCount", correctAnswersCount);
+            localStorage.setItem("answeredQuestions", JSON.stringify(answeredQuestions));
+            localStorage.setItem("userAnswers", JSON.stringify(userAnswers));
+
+            if (correctAnswersCount === questions.length) {
+                showCompletionMessage();
+            }
+        } else {
+            feedbackMessage.innerText = "Incorrect! Try again.";
+            feedbackMessage.style.color = "red";
+            button.disabled = false; // Re-enable button
+            button.innerText = "Submit"; // Reset button text
+        }
+
+        attemptMessage.innerText = `Attempts: ${attemptCounts[index]}`;
+    }, 1500); // Delay of 1.5 seconds before showing the result
 }
 
-// Admin can check attempt counts via console
-function getAttempts() {
-    console.log(`Attempts for Team ${currentTeam}:`, attemptCounts);
+// Show Completion Message and Room Number
+function showCompletionMessage() {
+    let roomNumbers = questions.map(q => 
+        `<p>${q.a} - <b>Location:</b> ${q.room}</p>`
+    ).join("");
+
+    roomLocationStored = `<h3>🎉 Congratulations! You have successfully completed the quiz. 🎉</h3>${roomNumbers}`;
+    localStorage.setItem("roomLocation", roomLocationStored);
+
+    roomLocation.innerHTML = roomLocationStored;
+    roomLocation.style.display = "block";
+
+    timerElement.style.display = "none"; // Hide the timer
+    quizCompleted = true;
+    localStorage.setItem("quizCompleted", JSON.stringify(quizCompleted));
+}
+
+
+// Restore State on Refresh
+if (quizCompleted) {
+    roomLocation.innerHTML = roomLocationStored;
+    roomLocation.style.display = "block";
 }
