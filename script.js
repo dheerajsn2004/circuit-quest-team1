@@ -1,7 +1,7 @@
 const questions = [
-    { q: "The unit of resistance is ___.", a: "ohm", room: "Room A101" },
-    { q: "An LED emits ___ when current flows through it.", a: "light", room: "Room B202" },
-    { q: "A capacitor stores ___ energy.", a: "electrical", room: "Room C303" }
+    { q: ": My resistance fades as the sun gazes upon me, but when night falls, I stand firm against the current. What am I?", a: "LDR", room: "Room 303" },
+    { q: "A whisper of control at my gate unleashes a river beyond. I am the bridge between weak and strong signals. Who am I?", a: "BJT || Transistor", room: "Room 405" },
+    { q: ": I devour electrons and return them as brilliance, yet a wrong approach leaves me in darkness. What am I?", a: "LED", room: "AEC Lab" }
 ];
 
 let attemptCounts = JSON.parse(localStorage.getItem("attemptCounts")) || Array(questions.length).fill(0);
@@ -71,7 +71,7 @@ function checkAnswer(index) {
     let button = document.querySelector(`.question:nth-child(${index + 1}) button`);
 
     let userAnswer = answerInput.value.trim().toLowerCase();
-    let correctAnswer = questions[index].a.toLowerCase();
+    let correctAnswers = questions[index].a.toLowerCase().split(" || "); // Split possible answers
 
     if (!userAnswer) return; 
 
@@ -83,7 +83,7 @@ function checkAnswer(index) {
         attemptCounts[index]++;
         localStorage.setItem("attemptCounts", JSON.stringify(attemptCounts));
 
-        if (userAnswer === correctAnswer) {
+        if (correctAnswers.includes(userAnswer)) { // Check if user answer matches any correct answer
             feedbackMessage.innerText = "Correct!";
             feedbackMessage.style.color = "green"; // Keep text green
             answeredQuestions[index] = true;
