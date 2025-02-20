@@ -16,6 +16,7 @@ const timerElement = document.getElementById("timer");
 const roomLocation = document.getElementById("roomLocation");
 
 // Timer Logic
+// Timer Logic
 function startTimer() {
     if (quizCompleted) {
         timerElement.style.display = "none"; // Hide timer if quiz is already completed
@@ -23,27 +24,30 @@ function startTimer() {
     }
 
     const timerInterval = setInterval(() => {
-        if (correctAnswersCount === questions.length || timeLeft <= 0) {
+        if (correctAnswersCount === questions.length) {
             clearInterval(timerInterval);
-            if (correctAnswersCount === questions.length) {
-                timerElement.style.display = "none"; // Hide timer
-            } else {
-                alert("Time's up! The quiz will reset.");
-                localStorage.clear();
-                location.reload();
-            }
+            timerElement.style.display = "none"; // Hide timer
+        } else if (timeLeft <= 0) {
+            clearInterval(timerInterval);
+            alert("Time's up! You can no longer submit answers.");
+
+            // Disable all answer inputs and buttons when time is up
+            document.querySelectorAll("input, button").forEach((el) => el.disabled = true);
+
+            timerElement.innerText = "Time's Up!";
+            timerElement.style.backgroundColor = "red";
         } else {
             timeLeft--;
             localStorage.setItem("timeLeft", timeLeft);
             let minutes = Math.floor(timeLeft / 60);
             let seconds = timeLeft % 60;
 
-            // Change timer background color only when active
             timerElement.innerText = `Time Left: ${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
             timerElement.style.backgroundColor = timeLeft > 0 ? "transparent" : "red";
         }
     }, 1000);
 }
+
 
 startTimer();
 
